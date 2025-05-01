@@ -296,7 +296,7 @@
             welcomeText: '',
             responseTimeText: '',
             poweredBy: {
-                text: 'AI Chat by VISIO',
+                text: 'Powered by VISIO',
                 link: 'https://getvisio.digital'
             }
         },
