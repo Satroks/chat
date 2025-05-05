@@ -177,6 +177,22 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
+        /* === POCZĄTEK: Dodany styl dla ostrzeżenia o bezczynności === */
+        .n8n-chat-widget .chat-message.system-warning {
+            text-align: center;
+            font-style: italic;
+            font-size: 12px;
+            color: grey;
+            padding: 10px 0;
+            margin: 5px 0;
+            background: none;
+            border: none;
+            box-shadow: none;
+            max-width: 100%;
+            align-self: center;
+        }
+        /* === KONIEC: Dodany styl dla ostrzeżenia o bezczynności === */
+
         .n8n-chat-widget .chat-input {
             padding: 16px;
             background: var(--chat--color-background);
@@ -310,7 +326,7 @@
     };
 
     // Merge user config with defaults
-    const config = window.ChatWidgetConfig ? 
+    const config = window.ChatWidgetConfig ?
         {
             webhook: { ...defaultConfig.webhook, ...window.ChatWidgetConfig.webhook },
             branding: { ...defaultConfig.branding, ...window.ChatWidgetConfig.branding },
@@ -326,7 +342,7 @@
     // Create widget container
     const widgetContainer = document.createElement('div');
     widgetContainer.className = 'n8n-chat-widget';
-    
+
     // Set CSS variables for colors
     widgetContainer.style.setProperty('--n8n-chat-primary-color', config.style.primaryColor);
     widgetContainer.style.setProperty('--n8n-chat-secondary-color', config.style.secondaryColor);
@@ -335,7 +351,7 @@
 
     const chatContainer = document.createElement('div');
     chatContainer.className = `chat-container${config.style.position === 'left' ? ' position-left' : ''}`;
-    
+
     const newConversationHTML = `
         <div class="brand-header">
             <img src="${config.branding.logo}" alt="${config.branding.name}">
@@ -371,16 +387,16 @@
             </div>
         </div>
     `;
-    
+
     chatContainer.innerHTML = newConversationHTML + chatInterfaceHTML;
-    
+
     const toggleButton = document.createElement('button');
     toggleButton.className = `chat-toggle${config.style.position === 'left' ? ' position-left' : ''}`;
     toggleButton.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.5 21.5l4.5-.838A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18c-1.476 0-2.886-.313-4.156-.878l-3.156.586.586-3.156A7.962 7.962 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/>
         </svg>`;
-    
+
     widgetContainer.appendChild(chatContainer);
     widgetContainer.appendChild(toggleButton);
     document.body.appendChild(widgetContainer);
@@ -390,6 +406,63 @@
     const messagesContainer = chatContainer.querySelector('.chat-messages');
     const textarea = chatContainer.querySelector('textarea');
     const sendButton = chatContainer.querySelector('button[type="submit"]');
+    const closeButtons = chatContainer.querySelectorAll('.close-button');
+
+    // --- POCZĄTEK: Logika timera bezczynności ---
+    let inactivityTimer = null;
+    let warningTimer = null;
+    const inactivityTimeoutDuration = 60000; // 60 sekund w ms
+    const warningTimeoutBeforeClose = 10000; // 10 sekund w ms
+    const warningTimeoutDuration = inactivityTimeoutDuration - warningTimeoutBeforeClose; // 50 sekund
+    const norwegianWarningMessage = "Vinduet lukkes om 10 sekunder på grunn av inaktivitet.";
+    const warningMessageClass = 'system-warning'; // Klasa CSS dla wiadomości ostrzegawczej
+
+    function removeWarningMessage() {
+        const existingWarning = messagesContainer.querySelector(`.chat-message.${warningMessageClass}`);
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+    }
+
+    function showInactivityWarning() {
+        removeWarningMessage(); // Usuń poprzednie ostrzeżenie na wszelki wypadek
+        const warningDiv = document.createElement('div');
+        warningDiv.className = `chat-message ${warningMessageClass}`; // Nadaj klasę
+        warningDiv.textContent = norwegianWarningMessage;
+        messagesContainer.appendChild(warningDiv);
+        // Przewiń na dół, aby ostrzeżenie było widoczne
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function closeChatWindow() {
+        if (chatContainer.classList.contains('open')) { // Dodatkowe sprawdzenie dla pewności
+             chatContainer.classList.remove('open');
+             stopInactivityTimer(); // Upewnij się, że timery są wyczyszczone przy zamykaniu
+        }
+    }
+
+    function stopInactivityTimer() {
+        clearTimeout(warningTimer);
+        clearTimeout(inactivityTimer);
+        warningTimer = null;
+        inactivityTimer = null;
+        removeWarningMessage(); // Usuń ostrzeżenie, jeśli jest widoczne
+    }
+
+    function resetInactivityTimer() {
+        stopInactivityTimer(); // Najpierw wyczyść istniejące timery
+        if (chatContainer.classList.contains('open')) { // Uruchom timer tylko, gdy czat jest otwarty
+            try {
+                 // Używamy setTimeout do zaplanowania ostrzeżenia i zamknięcia
+                warningTimer = setTimeout(showInactivityWarning, warningTimeoutDuration);
+                inactivityTimer = setTimeout(closeChatWindow, inactivityTimeoutDuration);
+            } catch(e) {
+                console.error("Błąd podczas ustawiania timerów bezczynności:", e);
+            }
+        }
+    }
+    // --- KONIEC: Logika timera bezczynności ---
+
 
     function generateUUID() {
         return crypto.randomUUID();
@@ -401,103 +474,174 @@
             action: "loadPreviousSession",
             sessionId: currentSessionId,
             route: config.webhook.route,
-            metadata: {
-                userId: ""
-            }
+            metadata: { userId: "" } // Można tu dodać ID użytkownika, jeśli jest dostępne
         }];
 
         try {
             const response = await fetch(config.webhook.url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
 
+            if (!response.ok) {
+                 throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const responseData = await response.json();
-            chatContainer.querySelector('.brand-header').style.display = 'none';
+            chatContainer.querySelector('.brand-header:not(.chat-interface .brand-header)').style.display = 'none'; // Ukryj tylko pierwszy header
             chatContainer.querySelector('.new-conversation').style.display = 'none';
             chatInterface.classList.add('active');
 
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = Array.isArray(responseData) ? responseData[0].output : responseData.output;
+            // Sprawdzenie, czy odpowiedź jest tablicą i ma element output
+             if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
+                 botMessageDiv.textContent = responseData[0].output;
+             } else if (responseData.output) {
+                 botMessageDiv.textContent = responseData.output;
+             } else {
+                 // Obsługa nieoczekiwanej odpowiedzi
+                 console.warn("Otrzymano nieoczekiwany format odpowiedzi przy starcie konwersacji:", responseData);
+                 botMessageDiv.textContent = "Przepraszamy, wystąpił błąd."; // Przykładowa wiadomość
+             }
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            resetInactivityTimer(); // Zresetuj timer po rozpoczęciu konwersacji i pokazaniu interfejsu
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Błąd podczas rozpoczynania nowej konwersacji:', error);
+             // Można tu dodać wyświetlenie błędu użytkownikowi w interfejsie
         }
     }
 
     async function sendMessage(message) {
+        if (!currentSessionId) {
+            console.error("Brak ID sesji. Nie można wysłać wiadomości.");
+            // Można spróbować ponownie zainicjować sesję lub poinformować użytkownika
+            return;
+        }
+
         const messageData = {
             action: "sendMessage",
             sessionId: currentSessionId,
             route: config.webhook.route,
             chatInput: message,
-            metadata: {
-                userId: ""
-            }
+            metadata: { userId: "" } // Można tu dodać ID użytkownika
         };
 
         const userMessageDiv = document.createElement('div');
         userMessageDiv.className = 'chat-message user';
         userMessageDiv.textContent = message;
         messagesContainer.appendChild(userMessageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight; // Przewiń po dodaniu wiadomości usera
+
+        resetInactivityTimer(); // Zresetuj timer, gdy użytkownik wysyła wiadomość
 
         try {
+            // Zablokuj pole tekstowe i przycisk wysyłania na czas odpowiedzi
+            textarea.disabled = true;
+            sendButton.disabled = true;
+
             const response = await fetch(config.webhook.url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(messageData)
             });
-            
+
+            if (!response.ok) {
+                 throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
-            
+
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = Array.isArray(data) ? data[0].output : data.output;
+            // Sprawdzenie formatu odpowiedzi (tak jak w startNewConversation)
+            if (Array.isArray(data) && data.length > 0 && data[0].output) {
+                 botMessageDiv.textContent = data[0].output;
+             } else if (data.output) {
+                 botMessageDiv.textContent = data.output;
+             } else {
+                 console.warn("Otrzymano nieoczekiwany format odpowiedzi na wiadomość:", data);
+                 botMessageDiv.textContent = "Przepraszamy, wystąpił błąd odpowiedzi."; // Przykładowa wiadomość
+             }
             messagesContainer.appendChild(botMessageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Przewiń po dodaniu wiadomości bota
+
+            resetInactivityTimer(); // Zresetuj timer również po otrzymaniu odpowiedzi bota
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Błąd podczas wysyłania wiadomości:', error);
+            // Można wyświetlić błąd w interfejsie
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'chat-message bot'; // Wygląd jak wiadomość bota
+            errorDiv.textContent = "Nie udało się wysłać wiadomości. Spróbuj ponownie.";
+            errorDiv.style.color = 'red'; // Opcjonalne wyróżnienie błędu
+            messagesContainer.appendChild(errorDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } finally {
+             // Odblokuj pole tekstowe i przycisk niezależnie od wyniku
+            textarea.disabled = false;
+            sendButton.disabled = false;
+             textarea.focus(); // Ustaw fokus z powrotem na pole tekstowe
         }
     }
 
+    // --- Zmodyfikowane i dodane Event Listenery ---
+
     newChatBtn.addEventListener('click', startNewConversation);
-    
+
     sendButton.addEventListener('click', () => {
         const message = textarea.value.trim();
-        if (message) {
+        if (message && !sendButton.disabled) { // Sprawdź, czy przycisk nie jest zablokowany
             sendMessage(message);
             textarea.value = '';
+            textarea.style.height = 'auto'; // Zresetuj wysokość textarea
         }
     });
-    
+
     textarea.addEventListener('keypress', (e) => {
+        // Timer jest resetowany przez 'input', nie trzeba tutaj
         if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
+            e.preventDefault(); // Zapobiegaj nowej linii
             const message = textarea.value.trim();
-            if (message) {
+            if (message && !sendButton.disabled) { // Sprawdź, czy wysyłanie nie jest zablokowane
                 sendMessage(message);
                 textarea.value = '';
+                textarea.style.height = 'auto'; // Zresetuj wysokość textarea
             }
         }
     });
-    
-    toggleButton.addEventListener('click', () => {
-        chatContainer.classList.toggle('open');
+
+    // Resetuj timer przy każdej zmianie w polu tekstowym (pisaniu)
+    textarea.addEventListener('input', () => {
+        resetInactivityTimer();
+        // Automatyczne dopasowanie wysokości textarea (opcjonalne, ale wygodne)
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
     });
 
-    // Add close button handlers
-    const closeButtons = chatContainer.querySelectorAll('.close-button');
+    toggleButton.addEventListener('click', () => {
+        const isOpen = chatContainer.classList.contains('open');
+        chatContainer.classList.toggle('open');
+        if (!isOpen) { // Jeśli czat został właśnie otwarty
+            resetInactivityTimer();
+            // Jeśli interfejs czatu nie jest jeszcze aktywny (np. pierwsze otwarcie),
+            // nie ma potrzeby ustawiania fokusa, bo jest ekran powitalny.
+            // Jeśli interfejs JEST aktywny (np. ponowne otwarcie), ustaw fokus.
+            if(chatInterface.classList.contains('active')) {
+                 setTimeout(() => textarea.focus(), 0); // Ustaw fokus na textarea
+            }
+        } else { // Jeśli czat został właśnie zamknięty
+            stopInactivityTimer();
+        }
+    });
+
+    // Dodaj obsługę przycisków zamykania (obsługują oba headery)
     closeButtons.forEach(button => {
         button.addEventListener('click', () => {
-            chatContainer.classList.remove('open');
+            closeChatWindow(); // Użyj funkcji zamykającej, która czyści timery
         });
     });
-})();
+
+})(); // Koniec IIFE
