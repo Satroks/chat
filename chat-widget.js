@@ -2,6 +2,9 @@
 (function() {
     // Create and inject styles
     const styles = `
+        /* ... CAŁY ORYGINALNY BLOK CSS ... */
+        /* Upewnij się, że jest tu cały blok CSS z oryginalnego kodu */
+
         .n8n-chat-widget {
             --chat--color-primary: var(--n8n-chat-primary-color, #854fff);
             --chat--color-secondary: var(--n8n-chat-secondary-color, #6b3fd4);
@@ -36,6 +39,7 @@
             flex-direction: column;
         }
 
+        /* Styl dla obu nagłówków */
         .n8n-chat-widget .brand-header {
             padding: 16px;
             display: flex;
@@ -43,6 +47,7 @@
             gap: 12px;
             border-bottom: 1px solid rgba(133, 79, 255, 0.1);
             position: relative;
+            flex-shrink: 0; /* Zapobiega kurczeniu się nagłówka */
         }
 
         .n8n-chat-widget .close-button {
@@ -78,11 +83,18 @@
             color: var(--chat--color-font);
         }
 
+        /* Kontener dla ekranu powitalnego */
+        .n8n-chat-widget .welcome-container {
+             /* Ten kontener będzie ukrywany/pokazywany */
+             flex-grow: 1; /* Zajmuje dostępną przestrzeń */
+             display: flex; /* Umożliwia wyśrodkowanie */
+             align-items: center; /* Wyśrodkowanie w pionie */
+             justify-content: center; /* Wyśrodkowanie w poziomie */
+             position: relative; /* Dla pozycjonowania .new-conversation */
+        }
+
         .n8n-chat-widget .new-conversation {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            /* Usunięto position: absolute */
             padding: 20px;
             text-align: center;
             width: 100%;
@@ -132,18 +144,24 @@
             margin: 0;
         }
 
+        /* Kontener interfejsu czatu */
         .n8n-chat-widget .chat-interface {
-            display: none;
+            display: none; /* Ukryty domyślnie */
             flex-direction: column;
-            height: 100%;
+            height: 100%; /* Zajmuje całą wysokość .chat-container */
+            width: 100%; /* Zajmuje całą szerokość .chat-container */
+            position: absolute; /* Pozycjonowany absolutnie wewnątrz .chat-container */
+            top: 0;
+            left: 0;
+            background: var(--chat--color-background); /* Tło na wypadek prześwitywania */
         }
 
         .n8n-chat-widget .chat-interface.active {
-            display: flex;
+            display: flex; /* Pokazywany gdy aktywny */
         }
 
         .n8n-chat-widget .chat-messages {
-            flex: 1;
+            flex: 1; /* Rozciąga się, zajmując dostępną przestrzeń */
             overflow-y: auto;
             padding: 20px;
             background: var(--chat--color-background);
@@ -197,6 +215,7 @@
             border-top: 1px solid rgba(133, 79, 255, 0.1);
             display: flex;
             gap: 8px;
+            flex-shrink: 0; /* Zapobiega kurczeniu się */
         }
 
         .n8n-chat-widget .chat-input textarea {
@@ -209,6 +228,8 @@
             resize: none;
             font-family: inherit;
             font-size: 14px;
+            max-height: 100px; /* Ograniczenie wysokości pola tekstowego */
+            overflow-y: auto; /* Pasek przewijania, gdy tekst jest dłuższy */
         }
 
         .n8n-chat-widget .chat-input textarea::placeholder {
@@ -226,6 +247,7 @@
             transition: transform 0.2s;
             font-family: inherit;
             font-weight: 500;
+            align-self: flex-end; /* Wyrównaj przycisk do dołu, jeśli textarea rośnie */
         }
 
         .n8n-chat-widget .chat-input button:hover {
@@ -271,6 +293,7 @@
             text-align: center;
             background: var(--chat--color-background);
             border-top: 1px solid rgba(133, 79, 255, 0.1);
+            flex-shrink: 0; /* Zapobiega kurczeniu się */
         }
 
         .n8n-chat-widget .chat-footer a {
@@ -332,43 +355,38 @@
     const chatContainer = document.createElement('div');
     chatContainer.className = `chat-container${config.style.position === 'left' ? ' position-left' : ''}`;
 
-    const newConversationHTML = `
+    // Zmiana struktury HTML dla łatwiejszego ukrywania/pokazywania
+    // Nagłówek jest teraz stały, ukrywamy tylko kontener powitalny
+    chatContainer.innerHTML = `
         <div class="brand-header">
-            <img src="${config.branding.logo}" alt="${config.branding.name}">
-            <span>${config.branding.name}</span>
-            <button class="close-button">×</button>
+             <img src="${config.branding.logo}" alt="${config.branding.name}">
+             <span>${config.branding.name}</span>
+             <button class="close-button">×</button>
         </div>
-        <div class="new-conversation">
-            <h2 class="welcome-text">${config.branding.welcomeText}</h2>
-            <button class="new-chat-btn">
-                <svg class="message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/>
-                </svg>
-                Send us a message
-            </button>
-            <p class="response-text">${config.branding.responseTimeText}</p>
+        <div class="welcome-container"> ${/* Kontener na ekran powitalny */''}
+            <div class="new-conversation">
+                 <h2 class="welcome-text">${config.branding.welcomeText}</h2>
+                 <button class="new-chat-btn">
+                     <svg class="message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                         <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/>
+                     </svg>
+                     Send us a message
+                 </button>
+                 <p class="response-text">${config.branding.responseTimeText}</p>
+            </div>
         </div>
-    `;
-
-    const chatInterfaceHTML = `
-        <div class="chat-interface">
-            <div class="brand-header">
-                <img src="${config.branding.logo}" alt="${config.branding.name}">
-                <span>${config.branding.name}</span>
-                <button class="close-button">×</button>
-            </div>
-            <div class="chat-messages"></div>
-            <div class="chat-input">
-                <textarea placeholder="Type your message here..." rows="1"></textarea>
-                <button type="submit">Send</button>
-            </div>
-            <div class="chat-footer">
-                <a href="${config.branding.poweredBy.link}" target="_blank">${config.branding.poweredBy.text}</a>
-            </div>
+        <div class="chat-interface"> ${/* Interfejs czatu - początkowo ukryty */''}
+            ${/* Nagłówek nie jest już potrzebny wewnątrz .chat-interface */''}
+             <div class="chat-messages"></div>
+             <div class="chat-input">
+                 <textarea placeholder="Type your message here..." rows="1"></textarea>
+                 <button type="submit">Send</button>
+             </div>
+             <div class="chat-footer">
+                 <a href="${config.branding.poweredBy.link}" target="_blank">${config.branding.poweredBy.text}</a>
+             </div>
         </div>
     `;
-
-    chatContainer.innerHTML = newConversationHTML + chatInterfaceHTML;
 
     const toggleButton = document.createElement('button');
     toggleButton.className = `chat-toggle${config.style.position === 'left' ? ' position-left' : ''}`;
@@ -381,14 +399,16 @@
     widgetContainer.appendChild(toggleButton);
     document.body.appendChild(widgetContainer);
 
+    // Selektory elementów
+    const welcomeContainer = chatContainer.querySelector('.welcome-container'); // Nowy selektor
     const newChatBtn = chatContainer.querySelector('.new-chat-btn');
     const chatInterface = chatContainer.querySelector('.chat-interface');
     const messagesContainer = chatContainer.querySelector('.chat-messages');
     const textarea = chatContainer.querySelector('textarea');
     const sendButton = chatContainer.querySelector('button[type="submit"]');
-    const closeButtons = chatContainer.querySelectorAll('.close-button');
+    const closeButtons = chatContainer.querySelectorAll('.close-button'); // Teraz tylko jeden przycisk X
 
-    // --- Logika timera bezczynności ---
+    // --- Logika timera bezczynności (bez zmian) ---
     let inactivityTimer = null;
     let warningTimer = null;
     const inactivityTimeoutDuration = 60000; // 60 sekund w ms
@@ -399,11 +419,8 @@
 
     function removeWarningMessage() {
         const existingWarning = messagesContainer.querySelector(`.chat-message.${warningMessageClass}`);
-        if (existingWarning) {
-            existingWarning.remove();
-        }
+        if (existingWarning) { existingWarning.remove(); }
     }
-
     function showInactivityWarning() {
         removeWarningMessage();
         const warningDiv = document.createElement('div');
@@ -412,95 +429,118 @@
         messagesContainer.appendChild(warningDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-
     function closeChatWindow() {
         if (chatContainer.classList.contains('open')) {
              chatContainer.classList.remove('open');
              stopInactivityTimer();
         }
     }
-
     function stopInactivityTimer() {
-        clearTimeout(warningTimer);
-        clearTimeout(inactivityTimer);
-        warningTimer = null;
-        inactivityTimer = null;
+        clearTimeout(warningTimer); clearTimeout(inactivityTimer);
+        warningTimer = null; inactivityTimer = null;
         removeWarningMessage();
     }
-
     function resetInactivityTimer() {
         stopInactivityTimer();
         if (chatContainer.classList.contains('open')) {
             try {
                 warningTimer = setTimeout(showInactivityWarning, warningTimeoutDuration);
                 inactivityTimer = setTimeout(closeChatWindow, inactivityTimeoutDuration);
-            } catch(e) {
-                console.error("Błąd podczas ustawiania timerów bezczynności:", e);
-            }
+            } catch(e) { console.error("Błąd podczas ustawiania timerów bezczynności:", e); }
         }
     }
     // --- Koniec Logiki timera bezczynności ---
 
+    function generateUUID() { return crypto.randomUUID(); }
 
-    function generateUUID() {
-        return crypto.randomUUID();
-    }
-
+    // --- Poprawiona funkcja startNewConversation ---
     async function startNewConversation() {
+        console.log("startNewConversation called"); // Log testowy
         currentSessionId = generateUUID();
         const data = [{
-            action: "loadPreviousSession",
-            sessionId: currentSessionId,
-            route: config.webhook.route,
-            metadata: { userId: "" }
+            action: "loadPreviousSession", sessionId: currentSessionId,
+            route: config.webhook.route, metadata: { userId: "" }
         }];
 
+        // Pokaż jakiś wskaźnik ładowania (opcjonalne)
+        newChatBtn.disabled = true;
+        newChatBtn.textContent = 'Łączenie...';
+
         try {
+            console.log("Wysyłanie żądania do:", config.webhook.url); // Log URL
             const response = await fetch(config.webhook.url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
+            console.log("Odpowiedź status:", response.status); // Log statusu
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                 // Zaloguj treść błędu, jeśli serwer ją zwrócił
+                let errorBody = 'Brak treści błędu';
+                try { errorBody = await response.text(); } catch(e){}
+                console.error("Błąd odpowiedzi serwera:", response.status, errorBody);
+                throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
+            }
 
             const responseData = await response.json();
-            chatContainer.querySelector('.brand-header:not(.chat-interface .brand-header)').style.display = 'none';
-            chatContainer.querySelector('.new-conversation').style.display = 'none';
-            chatInterface.classList.add('active');
+            console.log("Otrzymano odpowiedź:", responseData); // Log odpowiedzi
+
+            // Ukryj kontener powitalny i pokaż interfejs czatu
+            if (welcomeContainer) {
+                welcomeContainer.style.display = 'none';
+            } else {
+                console.error("Nie znaleziono welcomeContainer do ukrycia!");
+            }
+            if (chatInterface) {
+                 chatInterface.classList.add('active');
+            } else {
+                console.error("Nie znaleziono chatInterface do aktywacji!");
+            }
+
 
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
+            // Sprawdzanie odpowiedzi (bez zmian)
             if (Array.isArray(responseData) && responseData.length > 0 && responseData[0].output) {
                 botMessageDiv.textContent = responseData[0].output;
             } else if (responseData.output) {
                 botMessageDiv.textContent = responseData.output;
             } else {
-                console.warn("Otrzymano nieoczekiwany format odpowiedzi przy starcie konwersacji:", responseData);
-                botMessageDiv.textContent = "Witaj! W czym mogę pomóc?"; // Bardziej generyczna wiadomość powitalna w razie problemu
+                console.warn("Nieoczekiwany format odpowiedzi przy starcie:", responseData);
+                botMessageDiv.textContent = "Witaj! W czym mogę pomóc?";
             }
+            messagesContainer.innerHTML = ''; // Wyczyść ewentualne poprzednie wiadomości
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-            resetInactivityTimer(); // Resetuj timer po udanym rozpoczęciu konwersacji
+            resetInactivityTimer(); // Resetuj timer po udanym rozpoczęciu
+            setTimeout(() => textarea.focus(), 0); // Ustaw fokus na textarea
+
         } catch (error) {
-            console.error('Błąd podczas rozpoczynania nowej konwersacji:', error);
-            // Można tu rozważyć wyświetlenie błędu użytkownikowi
+            console.error('Błąd krytyczny podczas rozpoczynania nowej konwersacji:', error);
+            // Poinformuj użytkownika o błędzie w bardziej widoczny sposób
+             const errorTextElement = chatContainer.querySelector('.response-text');
+             if(errorTextElement) {
+                 errorTextElement.textContent = "Błąd połączenia. Spróbuj ponownie później.";
+                 errorTextElement.style.color = "red";
+             }
+             // Przywróć przycisk do stanu początkowego
+             newChatBtn.disabled = false;
+             newChatBtn.innerHTML = `
+                 <svg class="message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                     <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/>
+                 </svg>
+                 Send us a message`;
         }
     }
 
+    // --- Funkcja sendMessage (bez większych zmian, poza usuniętym resetem timera) ---
     async function sendMessage(message) {
-        if (!currentSessionId) {
-            console.error("Brak ID sesji. Nie można wysłać wiadomości.");
-            return;
-        }
-
+        if (!currentSessionId) { console.error("Brak ID sesji."); return; }
         const messageData = {
-            action: "sendMessage",
-            sessionId: currentSessionId,
-            route: config.webhook.route,
-            chatInput: message,
-            metadata: { userId: "" }
+            action: "sendMessage", sessionId: currentSessionId,
+            route: config.webhook.route, chatInput: message, metadata: { userId: "" }
         };
 
         const userMessageDiv = document.createElement('div');
@@ -509,63 +549,51 @@
         messagesContainer.appendChild(userMessageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        resetInactivityTimer(); // Resetuj timer, gdy użytkownik wysyła wiadomość
+        resetInactivityTimer(); // Resetuj timer przy wysyłaniu
 
         try {
-            textarea.disabled = true;
-            sendButton.disabled = true;
-
+            textarea.disabled = true; sendButton.disabled = true;
             const response = await fetch(config.webhook.url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(messageData)
             });
-
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
             const data = await response.json();
 
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
             if (Array.isArray(data) && data.length > 0 && data[0].output) {
-                botMessageDiv.textContent = data[0].output;
-            } else if (data.output) {
-                botMessageDiv.textContent = data.output;
-            } else {
-                console.warn("Otrzymano nieoczekiwany format odpowiedzi na wiadomość:", data);
-                botMessageDiv.textContent = "Przepraszamy, wystąpił błąd odpowiedzi.";
-            }
+                 botMessageDiv.textContent = data[0].output;
+             } else if (data.output) {
+                 botMessageDiv.textContent = data.output;
+             } else {
+                 console.warn("Nieoczekiwany format odpowiedzi:", data);
+                 botMessageDiv.textContent = "Przepraszamy, błąd odpowiedzi.";
+             }
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            // ----- USUNIĘTO resetInactivityTimer() STĄD -----
-            // Timer jest resetowany tylko przez akcje użytkownika (wysłanie) i pisanie.
-
+            // USUNIĘTO resetInactivityTimer() stąd
         } catch (error) {
             console.error('Błąd podczas wysyłania wiadomości:', error);
             const errorDiv = document.createElement('div');
             errorDiv.className = 'chat-message bot';
-            errorDiv.textContent = "Nie udało się wysłać wiadomości. Spróbuj ponownie.";
+            errorDiv.textContent = "Nie udało się wysłać wiadomości.";
             errorDiv.style.color = 'red';
             messagesContainer.appendChild(errorDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } finally {
-            textarea.disabled = false;
-            sendButton.disabled = false;
+            textarea.disabled = false; sendButton.disabled = false;
             textarea.focus();
         }
     }
 
-    // --- Event Listenery ---
-
+    // --- Event Listenery (niewielkie zmiany dla nowej struktury HTML) ---
     newChatBtn.addEventListener('click', startNewConversation);
 
     sendButton.addEventListener('click', () => {
         const message = textarea.value.trim();
         if (message && !sendButton.disabled) {
-            sendMessage(message);
-            textarea.value = '';
-            textarea.style.height = 'auto';
+            sendMessage(message); textarea.value = ''; textarea.style.height = 'auto';
         }
     });
 
@@ -574,18 +602,18 @@
             e.preventDefault();
             const message = textarea.value.trim();
             if (message && !sendButton.disabled) {
-                sendMessage(message);
-                textarea.value = '';
-                textarea.style.height = 'auto';
+                sendMessage(message); textarea.value = ''; textarea.style.height = 'auto';
             }
         }
     });
 
-    // Resetuj timer przy każdym wpisaniu znaku w polu tekstowym
     textarea.addEventListener('input', () => {
         resetInactivityTimer();
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
+        // Dopasowanie wysokości textarea
+        textarea.style.height = 'auto'; // Zresetuj wysokość
+        const maxHeight = 100; // Maksymalna wysokość z CSS
+        const scrollHeight = textarea.scrollHeight;
+        textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`; // Ustaw wysokość, ale nie więcej niż max
     });
 
     toggleButton.addEventListener('click', () => {
@@ -593,18 +621,20 @@
         chatContainer.classList.toggle('open');
         if (!isOpen) {
             resetInactivityTimer();
-            if(chatInterface.classList.contains('active')) {
+             // Jeśli interfejs czatu jest aktywny (nie ekran powitalny), ustaw fokus
+             if(chatInterface.classList.contains('active')) {
                  setTimeout(() => textarea.focus(), 0);
-            }
+             }
         } else {
             stopInactivityTimer();
         }
     });
 
-    closeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            closeChatWindow();
-        });
+    // Przycisk zamykania jest teraz tylko jeden w głównym .brand-header
+    closeButtons.forEach(button => { // Mimo że jest jeden, pętla nie zaszkodzi
+         button.addEventListener('click', () => {
+             closeChatWindow();
+         });
     });
 
-})();
+})(); // Koniec IIFE
