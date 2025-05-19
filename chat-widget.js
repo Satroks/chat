@@ -18,6 +18,8 @@
             display: none;
             width: 380px;
             height: 600px;
+            max-width: 95vw;
+            max-height: 80vh;
             background: var(--chat--color-background);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(133, 79, 255, 0.15);
@@ -155,7 +157,7 @@
             padding: 12px 16px;
             margin: 8px 0;
             border-radius: 12px;
-            max-width: 80%;
+            max-width: 85%;
             word-wrap: break-word;
             font-size: 14px;
             line-height: 1.5;
@@ -217,6 +219,60 @@
         .n8n-chat-widget .chat-input button:hover {
             transform: scale(1.05);
         }
+        
+        .n8n-chat-widget .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: var(--chat--color-font);
+            opacity: 0.7;
+        }
+        
+        .n8n-chat-widget .loading-indicator.active {
+            display: block;
+        }
+        
+        .n8n-chat-widget .loading-dots {
+            display: inline-block;
+        }
+        
+        .n8n-chat-widget .loading-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--chat--color-primary);
+            margin: 0 2px;
+            animation: loading-dots 1.4s infinite ease-in-out both;
+        }
+        
+        .n8n-chat-widget .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        
+        .n8n-chat-widget .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        
+        @keyframes loading-dots {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .n8n-chat-widget .error-message {
+            background-color: rgba(255, 0, 0, 0.1);
+            color: #d32f2f;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+        
+        .n8n-chat-widget .error-message.active {
+            display: block;
+        }
 
         .n8n-chat-widget .chat-toggle {
             position: fixed;
@@ -235,6 +291,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        
+        @media (max-width: 480px) {
+            .n8n-chat-widget .chat-container {
+                width: 100%;
+                max-width: 100%;
+                height: 100%;
+                max-height: 100%;
+                bottom: 0;
+                right: 0;
+                border-radius: 0;
+            }
+            
+            .n8n-chat-widget .chat-container.position-left {
+                left: 0;
+            }
         }
 
         .n8n-chat-widget .chat-toggle.position-left {
@@ -348,7 +420,7 @@
                 <svg class="message-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/>
                 </svg>
-                Send us a message
+                Send oss en melding
             </button>
             <p class="response-text">${config.branding.responseTimeText}</p>
         </div>
@@ -362,8 +434,16 @@
                 <button class="close-button">×</button>
             </div>
             <div class="chat-messages"></div>
+            <div class="loading-indicator">
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="error-message"></div>
             <div class="chat-input">
-                <textarea placeholder="Type your message here..." rows="1"></textarea>
+                <textarea placeholder="Skriv meldingen din her..." rows="1"></textarea>
                 <button type="submit">Send</button>
             </div>
             <div class="chat-footer">
@@ -407,6 +487,20 @@
         }];
 
         try {
+            // Ukryj ekran powitalny i pokaż interfejs czatu
+            chatContainer.querySelector('.brand-header').style.display = 'none';
+            chatContainer.querySelector('.new-conversation').style.display = 'none';
+            chatInterface.classList.add('active');
+            
+            // Pokaż wskaźnik ładowania
+            const loadingIndicator = chatContainer.querySelector('.loading-indicator');
+            loadingIndicator.classList.add('active');
+            
+            // Ukryj komunikat o błędzie, jeśli był widoczny
+            const errorMessage = chatContainer.querySelector('.error-message');
+            errorMessage.classList.remove('active');
+            errorMessage.textContent = '';
+
             const response = await fetch(config.webhook.url, {
                 method: 'POST',
                 headers: {
@@ -415,10 +509,14 @@
                 body: JSON.stringify(data)
             });
 
+            // Ukryj wskaźnik ładowania
+            loadingIndicator.classList.remove('active');
+
+            if (!response.ok) {
+                throw new Error(`Serverfeil: ${response.status}`);
+            }
+
             const responseData = await response.json();
-            chatContainer.querySelector('.brand-header').style.display = 'none';
-            chatContainer.querySelector('.new-conversation').style.display = 'none';
-            chatInterface.classList.add('active');
 
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
@@ -427,6 +525,11 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
             console.error('Error:', error);
+            
+            // Pokaż komunikat o błędzie
+            const errorMessage = chatContainer.querySelector('.error-message');
+            errorMessage.textContent = `Det oppstod en feil under tilkobling til serveren. Prøv igjen senere.`;
+            errorMessage.classList.add('active');
         }
     }
 
@@ -446,6 +549,18 @@
         userMessageDiv.textContent = message;
         messagesContainer.appendChild(userMessageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Pokaż wskaźnik ładowania
+        const loadingIndicator = chatContainer.querySelector('.loading-indicator');
+        loadingIndicator.classList.add('active');
+        
+        // Ukryj komunikat o błędzie, jeśli był widoczny
+        const errorMessage = chatContainer.querySelector('.error-message');
+        errorMessage.classList.remove('active');
+        errorMessage.textContent = '';
+        
+        // Wyłącz przycisk wysyłania podczas ładowania
+        sendButton.disabled = true;
 
         try {
             const response = await fetch(config.webhook.url, {
@@ -456,6 +571,16 @@
                 body: JSON.stringify(messageData)
             });
             
+            // Ukryj wskaźnik ładowania
+            loadingIndicator.classList.remove('active');
+            
+            // Włącz przycisk wysyłania
+            sendButton.disabled = false;
+            
+            if (!response.ok) {
+                throw new Error(`Serverfeil: ${response.status}`);
+            }
+            
             const data = await response.json();
             
             const botMessageDiv = document.createElement('div');
@@ -465,6 +590,17 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
             console.error('Error:', error);
+            
+            // Ukryj wskaźnik ładowania
+            loadingIndicator.classList.remove('active');
+            
+            // Włącz przycisk wysyłania
+            sendButton.disabled = false;
+            
+            // Pokaż komunikat o błędzie
+            const errorMessage = chatContainer.querySelector('.error-message');
+            errorMessage.textContent = `Det oppstod en feil under sending av meldingen. Prøv igjen senere.`;
+            errorMessage.classList.add('active');
         }
     }
 
@@ -478,6 +614,22 @@
         }
     });
     
+    // Funkcja do automatycznego dostosowania wysokości pola tekstowego
+    function autoResizeTextarea() {
+        // Resetuj wysokość, aby uzyskać prawidłową wysokość scrollHeight
+        textarea.style.height = 'auto';
+        
+        // Ustaw nową wysokość na podstawie zawartości
+        const newHeight = Math.min(Math.max(textarea.scrollHeight, 38), 150); // Min 38px, max 150px
+        textarea.style.height = newHeight + 'px';
+    }
+    
+    // Nasłuchuj zmiany w polu tekstowym, aby dostosować wysokość
+    textarea.addEventListener('input', autoResizeTextarea);
+    
+    // Inicjalizuj wysokość pola tekstowego
+    autoResizeTextarea();
+    
     textarea.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -485,6 +637,8 @@
             if (message) {
                 sendMessage(message);
                 textarea.value = '';
+                // Resetuj wysokość pola tekstowego po wysłaniu wiadomości
+                autoResizeTextarea();
             }
         }
     });
