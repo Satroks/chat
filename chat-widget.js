@@ -525,11 +525,7 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
             console.error('Error:', error);
-            
-            // Pokaż komunikat o błędzie
-            const errorMessage = chatContainer.querySelector('.error-message');
-            errorMessage.textContent = `Det oppstod en feil under tilkobling til serveren. Prøv igjen senere.`;
-            errorMessage.classList.add('active');
+            // Nie wyświetlamy komunikatu o błędzie połączenia z serwerem
         }
     }
 
@@ -597,10 +593,7 @@
             // Włącz przycisk wysyłania
             sendButton.disabled = false;
             
-            // Pokaż komunikat o błędzie
-            const errorMessage = chatContainer.querySelector('.error-message');
-            errorMessage.textContent = `Det oppstod en feil under sending av meldingen. Prøv igjen senere.`;
-            errorMessage.classList.add('active');
+            // Nie wyświetlamy komunikatu o błędzie połączenia z serwerem
         }
     }
 
