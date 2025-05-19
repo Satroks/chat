@@ -26,6 +26,7 @@
             border: 1px solid rgba(133, 79, 255, 0.2);
             overflow: hidden;
             font-family: inherit;
+            transition: all 0.3s ease;
         }
 
         .n8n-chat-widget .chat-container.position-left {
@@ -214,6 +215,10 @@
             transition: transform 0.2s;
             font-family: inherit;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 70px;
         }
 
         .n8n-chat-widget .chat-input button:hover {
@@ -293,6 +298,93 @@
             justify-content: center;
         }
         
+        /* Średnie ekrany (tablety) */
+        @media (max-width: 768px) and (min-width: 481px) {
+            .n8n-chat-widget .chat-container {
+                width: 340px;
+                height: 550px;
+                max-width: 90vw;
+                max-height: 75vh;
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .n8n-chat-widget .chat-container.position-left {
+                right: auto;
+                left: 15px;
+            }
+            
+            .n8n-chat-widget .chat-toggle {
+                bottom: 15px;
+                right: 15px;
+                width: 55px;
+                height: 55px;
+            }
+            
+            .n8n-chat-widget .chat-toggle.position-left {
+                right: auto;
+                left: 15px;
+            }
+            
+            .n8n-chat-widget .welcome-text {
+                font-size: 22px;
+            }
+        }
+        
+        /* Małe ekrany (telefony) */
+        @media (max-width: 480px) {
+            .n8n-chat-widget .chat-toggle {
+                bottom: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+            }
+            
+            .n8n-chat-widget .chat-toggle.position-left {
+                right: auto;
+                left: 15px;
+            }
+        }
+        
+        /* Bardzo małe ekrany (małe telefony) */
+        @media (max-width: 360px) {
+            .n8n-chat-widget .chat-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 45px;
+                height: 45px;
+            }
+            
+            .n8n-chat-widget .chat-toggle.position-left {
+                right: auto;
+                left: 10px;
+            }
+            
+            .n8n-chat-widget .brand-header img {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .n8n-chat-widget .brand-header span {
+                font-size: 16px;
+            }
+            
+            .n8n-chat-widget .welcome-text {
+                font-size: 18px;
+                margin-bottom: 16px;
+            }
+            
+            .n8n-chat-widget .new-chat-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .n8n-chat-widget .chat-input button {
+                min-width: 50px;
+                padding: 0 10px;
+            }
+        }
+        
         @media (max-width: 480px) {
             .n8n-chat-widget .chat-container {
                 width: 100%;
@@ -306,6 +398,52 @@
             
             .n8n-chat-widget .chat-container.position-left {
                 left: 0;
+            }
+            
+            .n8n-chat-widget .brand-header {
+                padding: 12px 16px;
+            }
+            
+            .n8n-chat-widget .welcome-text {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .n8n-chat-widget .new-chat-btn {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+            
+            .n8n-chat-widget .chat-message {
+                padding: 10px 14px;
+                max-width: 90%;
+                font-size: 13px;
+            }
+            
+            .n8n-chat-widget .chat-input {
+                padding: 12px;
+                display: flex;
+                align-items: center;
+                flex-wrap: nowrap;
+                gap: 6px;
+            }
+            
+            .n8n-chat-widget .chat-input textarea {
+                padding: 10px;
+                min-height: 40px;
+                max-height: 80px;
+                width: calc(100% - 20px);
+                font-size: 13px;
+            }
+            
+            .n8n-chat-widget .chat-input button {
+                padding: 0 15px;
+                min-width: 60px;
+                height: 40px;
+            }
+            
+            .n8n-chat-widget .chat-messages {
+                padding: 15px;
             }
         }
 
